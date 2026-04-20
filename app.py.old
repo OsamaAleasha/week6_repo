@@ -1,0 +1,156 @@
+import jwt
+import os
+import bcrypt
+from dotenv import load_dotenv
+from flask import Flask, render_template, request, redirect, url_for, jsonify
+from datetime import datetime, timedelta
+from flask import Flask, request, render_template, redirect, url_for, session
+from database.db import engine
+from database.models import users
+from sqlalchemy import select
+import bcrypt
+
+app = Flask(__name__)
+
+load_dotenv()
+SECRET_KEY = os.getenv("SECRET_KEY")
+
+def create_token(user_id):
+    paylod = {
+        "user_id": user_id,
+        "exp": datetime.utcnow() + timedelta(days=1)
+    }
+
+    token = jwt.encode(paylod, SECRET_KEY, algorithm="HS256")
+    return token
+
+def decode_token(token):
+    try:
+        data = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        return data["user_id"]
+    except:
+        return None
+
+
+
+
+
+
+@app.route("/")
+def home():
+    return redirect("/login")
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+
+    if request.method == "GET":
+        return render_template("login.html")
+    
+    email = request.form.get("email")
+    password = request.form.get("password")
+
+    # find user
+    with engine.connect() as conn:
+        query = select(users).where(users.c.email == email)
+        user = conn.execute(query).fetchone()
+
+    if not user:
+        return "User not found"
+    
+    if not bcrypt.checkpw(password.encode('utf-8'), user.password_hash.encode('utf-8')):
+        return "Invalid password"
+    
+    token = create_token(user.id)
+
+    session["token"] = token
+
+    return redirect(url_for("analyze"))
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    if request.method == "GET":
+        return render_template("register.html")
+    
+    username = request.form.get("username")
+    email = request.form.get("email")
+    password = request.form.get("password")
+
+    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+
+    try:
+        with engine.begin() as conn:
+
+            result = conn.execute(
+                users.insert().values(
+                    username=username,
+                    email=email,
+                    password_hash=hashed_password
+                )
+            )
+
+            # get new user id
+            user_id = result.inserted_primary_key[0]
+    except Exception:
+        return render_template("register.html", error="User already exists")
+    
+    token = create_token(user_id)
+    session["token"] = token
+
+    return redirect(url_for("analyze"))
+
+
+
+
+@app.route("/analyze", methods=["GET", "POST"])
+def analyze():
+    result = None
+    
+    if request.method == "POST":
+        result = {
+            "sentiment": "Positive",
+            "confidence": "98.5%"
+        }
+    
+    return render_template("analyze.html", result=result)
+
+@app.route("/history")
+def history():
+
+    data = [
+        {"input_text": "I love this!", "sentiment_label": "Positive", "confidence_score": 0.99, "analysis_timestamp": datetime.now()},
+        {"input_text": "This is terrible.", "sentiment_label": "Negative", "confidence_score": 0.85, "analysis_timestamp": datetime.now()}
+    ]
+
+    return render_template("history.html", history=data)
+
+@app.route("/profile")
+def profile():
+    # Dummy data for UI testing
+    user_data = {
+        "username": "CodingPro",
+        "email": "hello@example.com",
+        "joined": "January 2026"
+    }
+    
+    stats_data = {
+        "total": 42,
+        "avg_conf": 88.5,
+        "top_sentiment": "Positive"
+    }
+    
+    recent = [
+        {"text": "The service was amazing and fast.", "label": "Positive"},
+        {"text": "I hated the long wait times.", "label": "Negative"},
+        {"text": "It was an average experience.", "label": "Neutral"}
+    ]
+    
+    return render_template("profile.html", 
+                           user=user_data, 
+                           stats=stats_data, 
+                           recent_activity=recent)
+
+
+
+
+if __name__ == "__main__":
+    app.run(debug=True)

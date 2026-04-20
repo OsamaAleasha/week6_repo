@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analysis History</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<!-- TOP NAV -->
+<header class="topbar">
+    <h2>Sentiment Analyzer</h2>
+
+    <nav>
+        <a href="{{ url_for('analyze') }}">Analyze</a>
+        <a href="{{ url_for('history') }}">History</a>
+        <a href="{{ url_for('profile') }}">Profile</a>
+        <a href="">Logout</a>
+    </nav>
+</header>
+
+<main class="app-container">
+    <div class="history-container">
+        <div style="margin-bottom: 32px;">
+            <h1>Analysis History</h1>
+            <p style="color: var(--text-muted);">A record of all your processed text sentiments.</p>
+        </div>
+
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Input Text</th>
+                        <th>Sentiment</th>
+                        <th>Confidence</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in history %}
+                    <tr>
+                        <td><div class="text-truncate">{{ entry.input_text }}</div></td>
+                        <td>
+                            <span class="badge badge-{{ entry.sentiment_label|lower }}">
+                                {{ entry.sentiment_label }}
+                            </span>
+                        </td>
+                        <td><strong>{{ (entry.confidence_score * 100)|round(0) }}%</strong></td>
+                        <td style="color: var(--text-muted);">{{ entry.analysis_timestamp.strftime('%b %d, %Y') }}</td>
+                        <td>
+                            <button style="padding: 6px 12px; font-size: 12px; width: auto; margin: 0;">Details</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+</body>
+</html>

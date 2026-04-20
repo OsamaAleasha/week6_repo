@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register | Sentiment Analyzer</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='auth.css') }}">
+</head>
+<body>
+
+<main>
+    <div class="title">
+        <h1>Sentiment Analyzer</h1>
+    </div>
+
+    <!-- ✅ FORM START -->
+    <form method="POST" action="{{ url_for('register') }}">
+        <div class="login-container">
+            <h1>REGISTER</h1>
+
+            <!-- Username -->
+            <div class="input-group">
+                <label for="username">USERNAME</label>
+                <input type="text" id="username" name="username" placeholder="Username" required>
+            </div>
+
+            <!-- Email -->
+            <div class="input-group">
+                <label for="email">EMAIL</label>
+                <input type="email" id="email" name="email" placeholder="your@email.com" required>
+            </div>
+
+            <!-- Password -->
+            <div class="input-group">
+                <label for="password">PASSWORD</label>
+                <input type="password" id="password" name="password" placeholder="••••••••" required>
+            </div>
+
+            <!-- Submit -->
+            <button type="submit">CREATE ACCOUNT</button>
+
+            <div class="divider"></div>
+
+            <!-- Redirect -->
+            <div class="footer">
+                Already have an account?
+                <a href="{{ url_for('login') }}">Login</a>
+            </div>
+
+            <!-- Optional error message -->
+            {% if error %}
+                <p style="color: red; margin-top: 10px;">{{ error }}</p>
+            {% endif %}
+
+        </div>
+    </form>
+    <!-- ✅ FORM END -->
+
+</main>
+
+</body>
+</html>

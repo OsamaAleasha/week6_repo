@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentiment Analyzer</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='auth.css') }}">
+</head>
+<body>
+
+
+
+<main>
+    <form method="POST" action="{{ url_for('login') }}">
+
+    <div class="title">
+        <h1>Sentiment Analyzer</h1>
+    </div>
+
+    <div class="login-container">
+        <h1>LOGIN</h1>
+
+        <div class="input-group">
+            <label for="email">EMAIL</label>
+            <input type="email" id="email" name="email" placeholder="your@email.com">
+        </div>
+
+        <div class="input-group">
+            <label for="password">PASSWORD</label>
+            <input type="password" id="password" name="password" placeholder="••••••••">
+        </div>
+
+        <!-- ✅ REAL LOGIN BUTTON -->
+        <button type="submit">SIGN IN</button>
+
+        <div class="divider"></div>
+
+        <div class="footer">
+            Don't have an account?
+            <a href="{{ url_for('register') }}">Sign up</a>
+        </div>
+    </div>
+
+</form>
+</main>
+
+</body>
+</html>
