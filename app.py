@@ -1,21 +1,15 @@
-from flask import Flask, render_template, request, redirect, url_for, session
-from sqlalchemy import select
-from database.db import engine
-from database.models import users, analysis_history
+from flask import Flask, render_template, request, redirect, url_for, jsonify
 from database.main import *
-
 from dotenv import load_dotenv
 import os
 import bcrypt
 import datetime
-
 from jwt import JWT, jwk_from_dict
 
 load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY")
-
 SECRET_KEY = os.getenv("SECRET_KEY")
 
 # JWT setup
@@ -25,8 +19,8 @@ key = jwk_from_dict({
     "kty": "oct"
 })
 
+# --- JWT HELPER FUNCTIONS ---
 
-# JWT FUNCTIONS
 def create_token(user_id):
     payload = {
         "user_id": user_id,
@@ -42,139 +36,121 @@ def decode_token(token):
         return None
 
 def get_current_user():
-    token = session.get("token")
-    if not token:
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
         return None
+    token = auth_header.split(" ")[1]
     return decode_token(token)
 
+# --- PAGE ROUTES (Serve HTML) ---
+# Note: We don't check for user_id here because the browser cannot 
+# send the Authorization header during a URL redirect. 
+# Security is handled inside the JS on these pages.
 
 @app.route("/")
 def home():
     return redirect("/login")
 
+@app.route("/login")
+def login_page():
+    return render_template("login.html")
 
-@app.route("/login", methods=["GET", "POST"])
-def login():
+@app.route("/register")
+def register_page():
+    return render_template("register.html")
 
-    # show login page
-    if request.method == "GET":
-        return render_template("login.html")
+@app.route("/analyze")
+def analyze_page():
+    return render_template("analyze.html")
 
-    # get form data
-    email = request.form.get("email")
-    password = request.form.get("password")
+@app.route("/history-page")
+def history_page():
+    return render_template("history.html")
 
-    # find user in DB
+@app.route("/profile-page")
+def profile_page():
+    return render_template("profile.html")
+
+@app.route("/analytics")
+def analytics_page():
+    # Since this template currently uses direct Python logic for data,
+    # it is best to convert this to an API-based page like /profile.
+    # For now, it stays as is, but will require a valid session or token.
+    return render_template("analytics.html")
+
+# --- API ROUTES (Handle Data & Auth) ---
+
+@app.route("/api/login", methods=["POST"])
+def api_login():
+    data = request.get_json()
+    email = data.get("email")
+    password = data.get("password")
+
     user = get_user_by_email(email)
-
     if not user:
-        return render_template("login.html", error="User not found")
+        return jsonify({"error": "User not found"}), 401
 
-    # check password
     if not bcrypt.checkpw(password.encode("utf-8"), user.password_hash.encode("utf-8")):
-        return render_template("login.html", error="Invalid password")
+        return jsonify({"error": "Invalid password"}), 401
 
-    # create session token
     token = create_token(user.id)
-    session["token"] = token
+    return jsonify({"token": token, "redirect": "/analyze"})
 
-    return redirect(url_for("analyze"))
+@app.route("/api/register", methods=["POST"])
+def api_register():
+    data = request.get_json()
+    username = data.get("username")
+    email = data.get("email")
+    password = data.get("password")
 
-
-@app.route("/register", methods=["GET", "POST"])
-def register():
-
-    # show register page
-    if request.method == "GET":
-        return render_template("register.html")
-
-    # get form data
-    username = request.form.get("username")
-    email = request.form.get("email")
-    password = request.form.get("password")
-
-    # hash password before storing
     hashed_password = bcrypt.hashpw(
         password.encode("utf-8"),
         bcrypt.gensalt()
     ).decode("utf-8")
 
     try:
-        # create new user in DB
         user_id = create_user(username, email, hashed_password)
-
     except Exception:
-        return render_template("register.html", error="User already exists")
+        return jsonify({"error": "User already exists"}), 400
 
-    # create session token
     token = create_token(user_id)
-    session["token"] = token
+    return jsonify({"token": token, "redirect": "/analyze"})
 
-    return redirect(url_for("analyze"))
-
-
-@app.route("/logout")
-def logout():
-    session.pop("token", None)
-    return redirect("/login")
-
-
-@app.route("/analyze", methods=["GET", "POST"])
-def analyze():
-
-    # check login
+@app.route("/api/analyze", methods=["POST"])
+def api_analyze():
     user_id = get_current_user()
     if not user_id:
-        return redirect("/login")
+        return jsonify({"error": "Unauthorized"}), 401
 
-    result = None
+    data = request.get_json()
+    text = data.get("text", "")
 
-    # when form submitted
-    if request.method == "POST":
-        text = request.form.get("text")
+    # Sentiment Logic
+    positive_words = ["love", "great", "amazing", "good", "excellent", "awesome"]
+    negative_words = ["hate", "bad", "terrible", "awful", "worst", "horrible"]
+    text_lower = text.lower()
 
-        ###############################################################################
-        # Simple sentiment logic (placeholder)
-        positive_words = ["love", "great", "amazing", "good", "excellent", "awesome"]
-        negative_words = ["hate", "bad", "terrible", "awful", "worst", "horrible"]
+    if any(word in text_lower for word in positive_words):
+        sentiment, confidence = "Positive", 0.95
+    elif any(word in text_lower for word in negative_words):
+        sentiment, confidence = "Negative", 0.95
+    else:
+        sentiment, confidence = "Neutral", 0.70
 
-        text_lower = text.lower()
+    add_analysis(user_id, text, sentiment, confidence)
 
-        if any(word in text_lower for word in positive_words):
-            sentiment = "Positive"
-            confidence = 0.9
-        elif any(word in text_lower for word in negative_words):
-            sentiment = "Negative"
-            confidence = 0.9
-        else:
-            sentiment = "Neutral"
-            confidence = 0.75
-        ###############################################################################
+    return jsonify({
+        "sentiment": sentiment,
+        "confidence": f"{confidence * 100:.2f}%"
+    })
 
-        # result shown in UI
-        result = {
-            "sentiment": sentiment,
-            "confidence": f"{confidence * 100:.2f}%"
-        }
-
-        # save analysis to database
-        add_analysis(user_id, text, sentiment, confidence)
-
-    return render_template("analyze.html", result=result)
-
-
-@app.route("/history")
-def history():
-
-    # check login
+@app.route("/api/history")
+def api_history():
     user_id = get_current_user()
     if not user_id:
-        return redirect("/login")
+        return jsonify({"error": "Unauthorized"}), 401
     
-    # get user history from DB
     rows = get_user_history(user_id)
-
-    # format data for template
     data = [
         {
             "input_text": row.input_text,
@@ -184,105 +160,40 @@ def history():
         }
         for row in rows
     ]
+    return jsonify(data)
 
-    return render_template("history.html", history=data)
-
-
-@app.route("/profile")
-def profile():
-
-    # check login
+@app.route("/api/profile")
+def api_profile():
     user_id = get_current_user()
     if not user_id:
-        return redirect("/login")
+        return jsonify({"error": "Unauthorized"}), 401
     
-    # get user info + history
     user = get_user_by_id(user_id)
     history = get_user_analytics(user_id)
-
-
-    # get total analyses
     total = len(history)
 
-    # calculate stats
     if total > 0:
-        avg_conf = round(
-            sum(h.confidence_score for h in history) / total * 100, 2
-        )
-
+        avg_conf = round(sum(h.confidence_score for h in history) / total * 100, 2)
         sentiments = [h.sentiment_label for h in history]
         top_sentiment = max(set(sentiments), key=sentiments.count)
-
     else:
-        avg_conf = 0
-        top_sentiment = "N/A"
+        avg_conf, top_sentiment = 0, "N/A"
 
-    # last 3 activities
-    recent = [
-        {"text": h.input_text, "label": h.sentiment_label}
-        for h in history[-3:]
-    ]
+    recent = [{"text": h.input_text, "label": h.sentiment_label} for h in history[-3:]]
 
-    # user info for template
-    user_data = {
-        "username": user.username,
-        "email": user.email,
-        "joined": user.created_at.strftime("%B %Y")
-    }
-
-    stats_data = {
-        "total": total,
-        "avg_conf": avg_conf,
-        "top_sentiment": top_sentiment
-    }
-
-    return render_template(
-        "profile.html",
-        user=user_data,
-        stats=stats_data,
-        recent_activity=recent
-    )
-
-
-@app.route("/analytics")
-def analytics():
-
-    # check login
-    user_id = get_current_user()
-    if not user_id:
-        return redirect("/login")
-    
-    # get all user data
-    rows = get_user_analytics(user_id)
-
-    # get total analyses
-    total = len(rows)
-
-    # sentiment counts
-    positive = sum(1 for r in rows if r.sentiment_label == "Positive")
-    negative = sum(1 for r in rows if r.sentiment_label == "Negative")
-    neutral = sum(1 for r in rows if r.sentiment_label == "Neutral")
-
-    # average confidence
-    avg_conf = (
-        sum(r.confidence_score for r in rows) / total
-        if total > 0 else 0
-    )
-
-    # final analytics data
-    data = {
-        "total_analyses": total,
-        "sentiment_distribution": {
-            "positive": positive,
-            "neutral": neutral,
-            "negative": negative
+    return jsonify({
+        "user": {
+            "username": user.username,
+            "email": user.email,
+            "joined": user.created_at.strftime("%B %Y")
         },
-        "average_confidence": round(avg_conf, 2)
-    }
-
-    return render_template("analytics.html", data=data)
-
-
+        "stats": {
+            "total": total,
+            "avg_conf": avg_conf,
+            "top_sentiment": top_sentiment
+        },
+        "recent_activity": recent
+    })
 
 if __name__ == "__main__":
     app.run(debug=True)

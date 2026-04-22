@@ -13,7 +13,7 @@
 
 
 <main>
-    <form method="POST" action="{{ url_for('login') }}">
+    <form onsubmit="loginUser(event)">
 
     <div class="title">
         <h1>Sentiment Analyzer</h1>
@@ -32,19 +32,20 @@
             <input type="password" id="password" name="password" placeholder="••••••••">
         </div>
 
-        <!-- ✅ REAL LOGIN BUTTON -->
         <button type="submit">SIGN IN</button>
 
         <div class="divider"></div>
 
         <div class="footer">
             Don't have an account?
-            <a href="{{ url_for('register') }}">Sign up</a>
+            <a href="{{ url_for('register_page') }}">Sign up</a>
         </div>
     </div>
 
 </form>
 </main>
+
+<script src="{{ url_for('static', filename='js/auth.js') }}"></script>
 
 </body>
 </html>

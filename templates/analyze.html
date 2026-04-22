@@ -6,6 +6,13 @@
     <title>Analyze Sentiment</title>
 
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <script>
+    if (!localStorage.getItem("token")) {
+        window.location.href = "/login";
+    }
+</script>
+
 </head>
 <body>
 
@@ -13,10 +20,10 @@
     <h2>Sentiment Analyzer</h2>
 
     <nav>
-        <a href="{{ url_for('analyze') }}">Analyze</a>
-        <a href="{{ url_for('history') }}">History</a>
-        <a href="{{ url_for('profile') }}">Profile</a>
-        <a href="{{ url_for('logout') }}">Logout</a>
+        <a href="{{ url_for('analyze_page') }}">Analyze</a>
+        <a href="{{ url_for('history_page') }}">History</a>
+        <a href="{{ url_for('profile_page') }}">Profile</a>
+        <a href="#" onclick="logout()">Logout</a>
     </nav>
 </header>
 
@@ -26,31 +33,27 @@
     <section class="card">
         <h1>Analyze Text</h1>
 
-        <form method="POST" action="{{ url_for('analyze') }}">
-            <div class="input-group">
-                <label for="text">Enter text</label>
-                <textarea id="text" name="text" rows="6" placeholder="Type or paste text here..."></textarea>
-            </div>
+        <div class="input-group">
+            <label for="text">Enter text</label>
+            <textarea id="text" rows="6" placeholder="Type or paste text here..."></textarea>
+        </div>
 
-            <button type="submit">ANALYZE</button>
-        </form>
+        <button onclick="analyzeText()">ANALYZE</button>
     </section>
 
     <!-- RESULT CARD -->
     <section class="card">
         <h1>Result</h1>
 
-        <div class="result-box">
-            {% if result %}
-                <p><strong>Sentiment:</strong> {{ result.sentiment }}</p>
-                <p><strong>Confidence:</strong> {{ result.confidence }}</p>
-            {% else %}
-                <p>No analysis yet. Submit text above.</p>
-            {% endif %}
+        <div class="result-box" id="resultBox">
+            <p>No analysis yet. Submit text above.</p>
         </div>
     </section>
 
 </main>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script src="{{ url_for('static', filename='js/analyze.js') }}"></script>
 
 </body>
 </html>

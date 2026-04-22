@@ -15,8 +15,7 @@
         <h1>Sentiment Analyzer</h1>
     </div>
 
-    <!-- ✅ FORM START -->
-    <form method="POST" action="{{ url_for('register') }}">
+    <form onsubmit="registerUser(event)">
         <div class="login-container">
             <h1>REGISTER</h1>
 
@@ -46,7 +45,7 @@
             <!-- Redirect -->
             <div class="footer">
                 Already have an account?
-                <a href="{{ url_for('login') }}">Login</a>
+                <a href="{{ url_for('login_page') }}">Login</a>
             </div>
 
             <!-- Optional error message -->
@@ -56,9 +55,10 @@
 
         </div>
     </form>
-    <!-- ✅ FORM END -->
 
 </main>
+
+<script src="{{ url_for('static', filename='js/auth.js') }}"></script>
 
 </body>
 </html>

@@ -14,10 +14,10 @@
     <h2>Sentiment Analyzer</h2>
 
     <nav>
-        <a href="{{ url_for('analyze') }}">Analyze</a>
-        <a href="{{ url_for('history') }}">History</a>
-        <a href="{{ url_for('profile') }}">Profile</a>
-        <a href="{{ url_for('logout') }}">Logout</a>
+        <a href="{{ url_for('analyze_page') }}">Analyze</a>
+        <a href="{{ url_for('history_page') }}">History</a>
+        <a href="{{ url_for('profile_page') }}">Profile</a>
+        <a href="#" onclick="logout()">Logout</a>
     </nav>
 </header>
 
@@ -39,27 +39,18 @@
                         <th>Actions</th>
                     </tr>
                 </thead>
-                <tbody>
-                    {% for entry in history %}
+                <tbody id="historyBody">
                     <tr>
-                        <td><div class="text-truncate">{{ entry.input_text }}</div></td>
-                        <td>
-                            <span class="badge badge-{{ entry.sentiment_label|lower }}">
-                                {{ entry.sentiment_label }}
-                            </span>
-                        </td>
-                        <td><strong>{{ entry.confidence_score }}%</strong></td>
-                        <td style="color: var(--text-muted);">{{ entry.analysis_timestamp.strftime('%b %d, %Y') }}</td>
-                        <td>
-                            <button style="padding: 6px 12px; font-size: 12px; width: auto; margin: 0;">Details</button>
-                        </td>
+                        <td colspan="5">Loading...</td>
                     </tr>
-                    {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
 </main>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>  
+<script src="{{ url_for('static', filename='js/history.js') }}"></script>
 
 </body>
 </html>

@@ -11,10 +11,10 @@
 <header class="topbar">
     <h2>Sentiment Analyzer</h2>
     <nav>
-        <a href="{{ url_for('analyze') }}">Analyze</a>
-        <a href="{{ url_for('history') }}">History</a>
-        <a href="{{ url_for('profile') }}" class="active">Profile</a>
-        <a href="{{ url_for('logout') }}">Logout</a>
+        <a href="{{ url_for('analyze_page') }}">Analyze</a>
+        <a href="{{ url_for('history_page') }}">History</a>
+        <a href="{{ url_for('profile_page') }}" class="active">Profile</a>
+        <a href="#" onclick="logout()">Logout</a>
     </nav>
 </header>
 
@@ -22,13 +22,16 @@
     <div class="profile-grid">
         
         <aside class="card user-info-card">
-            <div class="avatar-placeholder">
-                {{ user.username[0] | upper }}
+            <div id="avatar" class="avatar-placeholder">
+                
             </div>
-            <h1>{{ user.username }}</h1>
-            <p style="color: var(--text-muted); margin-bottom: 20px;">{{ user.email }}</p>
+            <h1 id="username"></h1>
+            <p id="email" style="color: var(--text-muted); margin-bottom: 20px;"></p>
             <div style="border-top: 1px solid var(--border); padding-top: 20px;">
-                <p style="font-size: 13px;">Member Since:<br><strong>{{ user.joined }}</strong></p>
+                <p style="font-size: 13px;">
+                    Member Since:<br>
+                    <strong id="joined"></strong>
+                </p>
             </div>
         </aside>
 
@@ -36,33 +39,32 @@
             <div class="stat-group">
                 <div class="stat-card">
                     <h3>Total Scans</h3>
-                    <div class="value">{{ stats.total }}</div>
+                    <div id="total" class="value"></div>
                 </div>
                 <div class="stat-card">
                     <h3>Avg. Confidence</h3>
-                    <div class="value">{{ stats.avg_conf }}%</div>
+                    <div id="avg_conf" class="value"></div>
                 </div>
                 <div class="stat-card">
                     <h3>Most Frequent</h3>
-                    <div class="value" style="font-size: 18px;">{{ stats.top_sentiment }}</div>
+                    <div id="top_sentiment" class="value" style="font-size: 18px;"></div>
                 </div>
             </div>
 
             <div class="card">
                 <h2 style="font-size: 18px; margin-bottom: 20px;">Recent Activity</h2>
-                <div class="result-box" style="border-style: solid; background: white;">
-                    {% for activity in recent_activity %}
-                    <div style="padding: 10px 0; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between;">
-                        <span style="font-size: 14px;">{{ activity.text[:40] }}...</span>
-                        <span class="badge badge-{{ activity.label|lower }}">{{ activity.label }}</span>
-                    </div>
-                    {% endfor %}
+            
+                <div id="recentActivity" class="result-box" style="border-style: solid; background: white;">
+                    <p>Loading...</p>
                 </div>
             </div>
         </section>
 
     </div>
 </main>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script src="{{ url_for('static', filename='js/profile.js') }}"></script>
 
 </body>
 </html>
