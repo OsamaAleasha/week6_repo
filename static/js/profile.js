@@ -1,15 +1,12 @@
 async function loadProfile() {
-    // 1. Retrieve the token
     const token = localStorage.getItem("token");
 
-    // 2. Redirect to login if no token exists (Client-side protection)
     if (!token) {
         window.location.href = "/login";
         return;
     }
 
     try {
-        // 3. Include the Authorization header
         const response = await fetch("/api/profile", {
             method: "GET",
             headers: {
@@ -20,14 +17,12 @@ async function loadProfile() {
 
         const data = await response.json();
 
-        // 4. Handle unauthorized or expired tokens
         if (response.status === 401) {
             localStorage.removeItem("token");
             window.location.href = "/login";
             return;
         }
 
-        // Update the UI
         document.getElementById("avatar").innerText = data.user.username[0].toUpperCase();
         document.getElementById("username").innerText = data.user.username;
         document.getElementById("email").innerText = data.user.email;

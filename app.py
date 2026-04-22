@@ -19,7 +19,7 @@ key = jwk_from_dict({
     "kty": "oct"
 })
 
-# --- JWT HELPER FUNCTIONS ---
+# JWT HELPER FUNCTIONS
 
 def create_token(user_id):
     payload = {
@@ -42,11 +42,7 @@ def get_current_user():
     token = auth_header.split(" ")[1]
     return decode_token(token)
 
-# --- PAGE ROUTES (Serve HTML) ---
-# Note: We don't check for user_id here because the browser cannot 
-# send the Authorization header during a URL redirect. 
-# Security is handled inside the JS on these pages.
-
+# PAGE ROUTES (Serve HTML)
 @app.route("/")
 def home():
     return redirect("/login")
@@ -73,12 +69,9 @@ def profile_page():
 
 @app.route("/analytics")
 def analytics_page():
-    # Since this template currently uses direct Python logic for data,
-    # it is best to convert this to an API-based page like /profile.
-    # For now, it stays as is, but will require a valid session or token.
     return render_template("analytics.html")
 
-# --- API ROUTES (Handle Data & Auth) ---
+# API ROUTES (Handle Data & Auth)
 
 @app.route("/api/login", methods=["POST"])
 def api_login():
